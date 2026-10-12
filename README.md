@@ -32,7 +32,7 @@ ones. The high score is kept on the device.
 ```
 lib/main.dart                 the entire wrapper: localhost server + WebView
 ios/                          the Xcode project (bundle id com.kevin.textcrush)
-game/                         the game, vendored from kevinelong/textcrush at 061bf95
+game/                         the game, vendored from kevinelong/textcrush at 8ad1caf
 assets/www/                   staged from game/ by tools/copy-web-assets.sh (not committed)
 tools/copy-web-assets.sh      staging, shared by local builds and CI
 tools/make_icons.py           renders every app icon from the game's own mark
