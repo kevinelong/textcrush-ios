@@ -51,12 +51,20 @@ flutter build ipa --release   # on macOS, or just let codemagic.yaml do it
 ## Verification status, stated plainly
 
 Written and reviewed on Windows, which cannot compile or run an iOS app: **no simulator, no Xcode,
-no signed .ipa has been produced from this machine.** What has been checked here is that the Dart
-analyses cleanly, that `codemagic.yaml` parses and names the right bundle id and integration, that
-the Xcode project carries no leftovers from the project it was scaffolded from, that the plist and
-storyboard are well formed, and that the icon set matches its `Contents.json`. The first real
-compile, and the first run of the game on iOS, happens in CI and then on your phone through
-TestFlight — which is also where the iOS-specific risks below get answered.
+no signed .ipa has been produced from this machine.** What was checked here:
+
+- `dart format` parses `lib/main.dart` and `dart analyze` reports 41 findings, every one of which
+  traces to the four package imports that cannot resolve without a Flutter SDK on the machine
+  (`package:flutter/*`, `package:flutter_inappwebview`). No intrinsic problem in the file: the
+  cascade is undefined classes and the `super.key` parameters whose supertypes are unknown.
+- `codemagic.yaml` parses and names the right bundle id and integration; `Info.plist` and both
+  storyboards parse; the icon set matches its `Contents.json` (25 entries, 0 missing); the Xcode
+  project carries no leftovers of the app it was scaffolded from and has balanced braces;
+  `tools/copy-web-assets.sh` produces the 47 files the pubspec declares, and the staged copy is
+  git-ignored.
+
+The first real compile, and the first run of the game on iOS, happens in CI and then on your phone
+through TestFlight — which is also where the iOS-specific risks below get answered.
 
 ## Things to check on the first iOS run
 

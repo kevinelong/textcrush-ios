@@ -13,8 +13,10 @@ const Color kBoardColour = Color(0xFF221100);
 
 // documentRoot = 'assets/www' makes the bundled web build the server root, so the page's relative
 // paths (../game/classes/...) resolve offline.
-final InAppLocalhostServer _localhostServer =
-    InAppLocalhostServer(port: kServerPort, documentRoot: 'assets/www');
+final InAppLocalhostServer _localhostServer = InAppLocalhostServer(
+  port: kServerPort,
+  documentRoot: 'assets/www',
+);
 
 const String kInitialUrl = 'http://localhost:$kServerPort/web/index.html';
 
@@ -112,7 +114,9 @@ class _GameScreenState extends State<GameScreen> {
                   _controller = controller;
                 },
                 onReceivedError: (controller, request, error) {
-                  debugPrint('[webview] ${error.description} for ${request.url}');
+                  debugPrint(
+                    '[webview] ${error.description} for ${request.url}',
+                  );
                 },
                 onConsoleMessage: (controller, message) {
                   debugPrint('[webview] ${message.message}');
