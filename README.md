@@ -7,6 +7,17 @@ iOS app: a Flutter shell with one WKWebView, running the bundled game offline.
 **your Apple Developer account** to produce a signed build and put it in TestFlight; the steps are in
 [TESTFLIGHT.md](TESTFLIGHT.md). Nothing is on the App Store yet.
 
+## What it looks like
+
+The game's canvas - the same web build the app loads, captured from it:
+
+![The board](docs/canvas.png)
+
+The numbers over that board (score, turns, best) and the rules and sound buttons are not part of the
+capture: the app draws them as native Flutter text, so they are crisp at the screen's density and a
+screen reader can read them. There is no Mac on this workstation, so the .ipa is built and signed by
+Codemagic (see `codemagic.yaml`) rather than by a device capture taken here.
+
 ## What it is
 
 - **The whole wrapper is `lib/main.dart`** (~130 lines): a `flutter_inappwebview` WebView over a
@@ -32,7 +43,7 @@ ones. The high score is kept on the device.
 ```
 lib/main.dart                 the entire wrapper: localhost server + WebView
 ios/                          the Xcode project (bundle id com.kevin.textcrush)
-game/                         the game, vendored from kevinelong/textcrush at df17c8d
+game/                         the game, vendored from kevinelong/textcrush at b8d04bc0
 assets/www/                   staged from game/ by tools/copy-web-assets.sh (not committed)
 tools/copy-web-assets.sh      staging, shared by local builds and CI
 tools/make_icons.py           renders every app icon from the game's own mark
