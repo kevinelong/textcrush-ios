@@ -1,0 +1,74 @@
+# Codemagic CI — builds Text Crush for iOS and ships it to TestFlight.
+#
+# Why Codemagic: it builds and signs the .ipa on a macOS machine in the cloud, so no Mac is needed
+# anywhere in this project. The free tier is 500 macOS-M2 minutes a month and a build here is a few
+# minutes.
+#
+# ── ONE-TIME SETUP (all in a browser, no Mac) ───────────────────────────────
+# 1. Enrol in the Apple Developer Program ($99/yr): https://developer.apple.com/programs/
+# 2. Register the bundle id com.kevin.textcrush under Certificates, Identifiers & Profiles.
+# 3. App Store Connect → Apps → "+" → New App, using that bundle id. This is the record TestFlight
+#    fills.
+# 4. App Store Connect → Users and Access → Integrations → App Store Connect API → create a key with
+#    the "App Manager" role. Download the .p8 (one chance), note the Issuer ID and Key ID.
+# 5. codemagic.io → sign up, connect this repository, and add the key from step 4 under
+#    Team settings → Integrations → App Store Connect, named `textcrush_asc_key` (it must match
+#    `integrations.app_store_connect` below).
+# 6. Run the `ios-testflight` workflow.
+#
+# See TESTFLIGHT.md for the same steps with more detail.
+
+workflows:
+  ios-testflight:
+    name: Text Crush iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    integrations:
+      app_store_connect: textcrush_asc_key
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.kevin.textcrush
+      vars:
+        BUNDLE_ID: "com.kevin.textcrush"
+
+    scripts:
+      - name: Stage the bundled game
+        script: sh tools/copy-web-assets.sh
+
+      - name: Flutter packages
+        script: flutter pub get
+
+      - name: Install CocoaPods (flutter_inappwebview_ios pod)
+        script: find . -name "Podfile" -execdir pod install \;
+
+      - name: Auto-increment the build number from TestFlight
+        # Avoids "build already exists" rejections by bumping past the latest build on TestFlight.
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" 2>/dev/null || echo "0")
+          NEXT=$(( ${LATEST:-0} + 1 ))
+          echo "Using build number $NEXT"
+          echo "BUILD_NUMBER=$NEXT" >> $CM_ENV
+
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+
+      - name: Build the signed IPA
+        script: |
+          flutter build ipa --release \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=$HOME/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

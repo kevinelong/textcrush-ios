@@ -1,0 +1,29 @@
+name: textcrush
+description: "Text Crush — the word-board game, packaged for offline iOS use."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  # flutter_inappwebview 6.1.5 needs Dart >= 3.5, which Flutter stable ships.
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # A WebView plus the local http server that serves the bundled assets (InAppLocalhostServer).
+  # 6.x is required for that API.
+  flutter_inappwebview: ^6.1.5
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # The bundled web build, staged by tools/copy-web-assets.sh. Flutter's directory asset entries
+  # are non-recursive, so every directory that holds files has to be listed.
+  assets:
+    - assets/www/web/
+    - assets/www/game/classes/model/
+    - assets/www/game/classes/view/

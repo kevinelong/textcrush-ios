@@ -1,0 +1,210 @@
+<!-- The game draws its own chrome, so the page is a full-bleed canvas: device-width, no zoom, and
+     (for iOS) under the safe areas, which the wrapper keeps its square clear of. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#221100">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Text Crush">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+
+<script src="../game/classes/model/Util.js"></script>
+<script src="../game/classes/model/Symbol.js"></script>
+<script src="../game/classes/model/Neighbor.js"></script>
+<script src="../game/classes/model/Position.js"></script>
+<script src="../game/classes/model/Board.js"></script>
+<script src="../game/classes/model/Game.js"></script>
+<script src="../game/classes/model/Sprite.js"></script>
+<script src="../game/classes/view/Tile.js"></script>
+<script src="../game/classes/view/Display.js"></script>
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        let AudioContext = window.AudioContext // Default
+            || window.webkitAudioContext // Safari and old versions of Chrome
+            || false;
+        let context = new AudioContext();
+
+        let c = document.createElement("canvas");
+
+        // A canvas is a bitmap, so give it one backing pixel per device pixel and display it at the
+        // css size. Without this a 1080-wide phone at 2.75x drew into a 393 px canvas and stretched
+        // it to the screen - soft letters, and small text rasterised at 11 px then blown up.
+        //
+        // The game is square (board plus its score line) and lays itself out from the smaller
+        // viewport dimension, so the canvas is that square, centred: the board fills it exactly, and
+        // a tall phone screen does not leave the board pinned to the top with a void underneath.
+        let dpr = window.devicePixelRatio || 1;
+        let side = Math.min(window.innerWidth, window.innerHeight);
+
+        c.setAttribute("width", Math.round(side * dpr).toString());
+        c.setAttribute("height", Math.round(side * dpr).toString());
+        c.style.width = side + "px";
+        c.style.height = side + "px";
+
+        // Positioned by hand rather than with flex centring: inside the Android web view a
+        // `height: 100vh` flex body put the canvas at y = -196 instead of y = 0, so the board fell
+        // off the top of the screen. Integer offsets also avoid a half-pixel transform, which would
+        // resample the canvas and undo the point of drawing it at device density.
+        c.style.display = "block";
+        c.style.position = "absolute";
+        c.style.left = Math.round((window.innerWidth - side) / 2) + "px";
+        c.style.top = Math.round((window.innerHeight - side) / 2) + "px";
+
+        document.body.style.margin = "0";
+        document.body.style.background = "#221100";
+        document.body.appendChild(c);
+
+        let g = null;
+        let d = null;
+
+        function initialize() {
+
+            c.removeEventListener('click', initialize);
+
+            let previous = d;
+
+            g = new Game(8, 8);
+            d = new Display(c, g);
+
+            if (previous !== null) {
+                previous.stop();
+            }
+
+            function gameOver() {
+                let high_score_key = "high_score";
+
+                c.removeEventListener('click', onClick);
+                let message = "Game Over";
+
+                let high_score = localStorage.getItem(high_score_key);
+
+                if (g.score > high_score) {
+                    localStorage.setItem(high_score_key, g.score);
+                    message += "\nNew High Score!!!\n" +
+                        Display.addCommas(g.score.toString());
+                } else {
+                    message += "\nPrevious High Score:\n" +
+                        Display.addCommas(high_score);
+                }
+
+
+                d.showGameOver(message);
+                d.burst();
+
+                g = null;
+                d = null;
+
+                c.addEventListener('click', initialize);
+            }
+
+            function play(context, frequency, duration) {
+
+                let o = context.createOscillator();
+                let g = context.createGain();
+
+                o.connect(g);
+                g.connect(context.destination);
+
+                g.gain.exponentialRampToValueAtTime(
+                    0.00001, context.currentTime + duration
+                );
+
+                o.frequency.value = frequency;
+                o.start();
+
+            }
+
+            function onClick(e) {
+
+                if (d.busy) {
+                    return;
+                }
+
+                let delay = 150;
+
+                // The canvas sits in the middle of the page, so a click's viewport coordinates have
+                // to be moved into the canvas before the game can map them to a cell.
+                let bounds = c.getBoundingClientRect();
+
+                let values = d.onClick(e.x - bounds.left, e.y - bounds.top);
+
+                let neighbors = values["neighbors"];
+
+                if (Object.keys(neighbors).length === 0) {
+                    return;
+                }
+
+                if (AudioContext) {
+
+                    let count = Object.keys(neighbors).length;
+                    let noteLength = (500 / 8) / 1000;
+
+                    let notes = [];
+
+                    for (let i = 0; i < count; i++) {
+                        notes.push(440 + (60 * i));
+                    }
+
+                    for (let i = 0; i < notes.length; i++) {
+                        setTimeout(function () {
+                            play(context, notes[i], noteLength);
+                        }, noteLength * i * 1000);
+                    }
+
+
+                }
+
+                setTimeout(function () {
+
+                    let plan = g.fallPlan();
+
+                    g.moveDown();
+
+                    d.animateFall(plan, function () {
+
+                        if (g.movesUsed >= g.movesAvailable) {
+                            gameOver();
+                        }
+
+                    });
+
+                }, delay);
+
+            }
+
+            d.animateReveal(function () {
+                c.addEventListener('click', onClick);
+            });
+        }
+
+        initialize();
+
+        (function () {
+            window.addEventListener("resize", resizeThrottler, false);
+            let resizeTimeout = null;
+
+            function resizeThrottler() {
+                if (!resizeTimeout) {
+                    resizeTimeout = setTimeout(function () {
+                        resizeTimeout = null;
+                        if (d !== null) {
+                            d.draw();
+                        }
+                    }, 66);
+                }
+            }
+        }());
+        // Offline shell: after the first visit the game runs from the cache, which is what makes it
+        // installable (Add to Home Screen) and playable on a plane. The worker lives one directory up
+        // because its scope has to cover the engine in ../game/ as well as this page.
+        if ("serviceWorker" in navigator && "file:" !== location.protocol) {
+            navigator.serviceWorker.register("../sw.js");
+        }
+    })
+    ;
+
+
+</script>
