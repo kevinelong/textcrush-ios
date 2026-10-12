@@ -17,6 +17,8 @@ iOS app: a Flutter shell with one WKWebView, running the bundled game offline.
 - **iOS 13 or newer**, portrait, full screen, screen stays awake while you play.
 - The board is the square the game draws for itself, centred, clear of the notch and the home
   indicator.
+- A tap answers: the game presses the tile, pops the cleared run, floats what it scored, and asks
+  the app for a short haptic tick through the `haptic` JavaScript handler.
 
 ## How it plays
 
@@ -29,7 +31,7 @@ ones. The high score is kept on the device.
 ```
 lib/main.dart                 the entire wrapper: localhost server + WebView
 ios/                          the Xcode project (bundle id com.kevin.textcrush)
-game/                         the game, vendored from kevinelong/textcrush at 938df7c
+game/                         the game, vendored from kevinelong/textcrush at bd1b349
 assets/www/                   staged from game/ by tools/copy-web-assets.sh (not committed)
 tools/copy-web-assets.sh      staging, shared by local builds and CI
 tools/make_icons.py           renders every app icon from the game's own mark

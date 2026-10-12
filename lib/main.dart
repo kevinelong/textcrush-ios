@@ -112,6 +112,16 @@ class _GameScreenState extends State<GameScreen> {
                 },
                 onWebViewCreated: (controller) {
                   _controller = controller;
+
+                  // The game asks for a tap to be felt through this bridge - the iOS counterpart of
+                  // the Android JavascriptInterface, and the reason the page feature-detects it.
+                  controller.addJavaScriptHandler(
+                    handlerName: 'haptic',
+                    callback: (args) {
+                      HapticFeedback.mediumImpact();
+                      return true;
+                    },
+                  );
                 },
                 onReceivedError: (controller, request, error) {
                   debugPrint(
