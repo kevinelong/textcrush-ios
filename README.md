@@ -53,6 +53,7 @@ tools/check.sh                everything checkable without a Mac: the analyzer r
                               the vendored game
 codemagic.yaml                the cloud build + TestFlight upload
 TESTFLIGHT.md                 the one-time Apple/Codemagic setup
+docs/STATE.md                 where this project stands, and what is waiting to be pushed
 ```
 
 ## Build
