@@ -48,6 +48,9 @@ game/                         the game, vendored from kevinelong/textcrush at b8
 assets/www/                   staged from game/ by tools/copy-web-assets.sh (not committed)
 tools/copy-web-assets.sh      staging, shared by local builds and CI
 tools/make_icons.py           renders every app icon from the game's own mark
+tools/check.sh                everything checkable without a Mac: the analyzer result, the numbers
+                              this README claims, the icon set, the plists, the Codemagic wiring and
+                              the vendored game
 codemagic.yaml                the cloud build + TestFlight upload
 TESTFLIGHT.md                 the one-time Apple/Codemagic setup
 ```
@@ -66,7 +69,8 @@ flutter build ipa --release   # on macOS, or just let codemagic.yaml do it
 ## Verification status, stated plainly
 
 Written and reviewed on Windows, which cannot compile or run an iOS app: **no simulator, no Xcode,
-no signed .ipa has been produced from this machine.** What was checked here:
+no signed .ipa has been produced from this machine.** What was checked here, re-runnable with
+`sh tools/check.sh`:
 
 - `dart format` parses `lib/main.dart`, and `dart analyze lib/main.dart` reports **99 issues (95
   errors, 4 warnings)** under Dart 3.13.4 — every one of them tracing to the four package imports
