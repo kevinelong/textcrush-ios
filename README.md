@@ -3,9 +3,10 @@
 The word-board game from [textcrush](https://github.com/kevinelong/textcrush), packaged as a native
 iOS app: a Flutter shell with one WKWebView, running the bundled game offline.
 
-**Status:** the project is complete and builds on Codemagic — no Mac is involved anywhere. It needs
-**your Apple Developer account** to produce a signed build and put it in TestFlight; the steps are in
-[TESTFLIGHT.md](TESTFLIGHT.md). Nothing is on the App Store yet.
+**Status:** the project is complete and the build path is set up for Codemagic (`codemagic.yaml`) —
+no Mac is involved anywhere. No build has been run: there is no signed `.ipa`, no tag and no release
+in this repository. It needs **your Apple Developer account** to produce a signed build and put it in
+TestFlight; the steps are in [TESTFLIGHT.md](TESTFLIGHT.md). Nothing is on the App Store yet.
 
 ## What it looks like
 
@@ -20,7 +21,7 @@ Codemagic (see `codemagic.yaml`) rather than by a device capture taken here.
 
 ## What it is
 
-- **The whole wrapper is `lib/main.dart`** (~130 lines): a `flutter_inappwebview` WebView over a
+- **The whole wrapper is `lib/main.dart`** (348 lines): a `flutter_inappwebview` WebView over a
   localhost server (`InAppLocalhostServer`) that serves the bundled game from the app's own assets.
 - **Offline, and nothing else.** No permissions, no network, no ads, no analytics, no third-party
   libraries beyond the WebView itself. The only thing stored is your high score, in the app's own
@@ -67,15 +68,21 @@ flutter build ipa --release   # on macOS, or just let codemagic.yaml do it
 Written and reviewed on Windows, which cannot compile or run an iOS app: **no simulator, no Xcode,
 no signed .ipa has been produced from this machine.** What was checked here:
 
-- `dart format` parses `lib/main.dart` and `dart analyze` reports 41 findings, every one of which
-  traces to the four package imports that cannot resolve without a Flutter SDK on the machine
-  (`package:flutter/*`, `package:flutter_inappwebview`). No intrinsic problem in the file: the
-  cascade is undefined classes and the `super.key` parameters whose supertypes are unknown.
+- `dart format` parses `lib/main.dart`, and `dart analyze lib/main.dart` reports **99 issues (95
+  errors, 4 warnings)** under Dart 3.13.4 — every one of them tracing to the four package imports
+  that cannot resolve without a Flutter SDK on the machine (`package:flutter/*`,
+  `package:flutter_inappwebview`): the analyzer's four `uri_does_not_exist` findings and the
+  undefined classes and `super.key` parameters that cascade from them. No intrinsic problem in the
+  file. The current SDK's formatter would also restyle it (`dart format --set-exit-if-changed`
+  reports a change); that is left alone rather than reformatting code no compiler here can check.
 - `codemagic.yaml` parses and names the right bundle id and integration; `Info.plist` and both
   storyboards parse; the icon set matches its `Contents.json` (25 entries, 0 missing); the Xcode
   project carries no leftovers of the app it was scaffolded from and has balanced braces;
   `tools/copy-web-assets.sh` produces the 47 files the pubspec declares, and the staged copy is
   git-ignored.
+- `game/source` is byte identical to `source/` in [kevinelong/textcrush](https://github.com/kevinelong/textcrush)
+  at `b8d04bc0`, which is that repository's most recent commit touching the game (`diff -rq` reports
+  no differences), so the wrapper carries the current game code rather than a stale copy.
 
 The first real compile, and the first run of the game on iOS, happens in CI and then on your phone
 through TestFlight — which is also where the iOS-specific risks below get answered.
