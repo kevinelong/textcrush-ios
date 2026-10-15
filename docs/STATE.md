@@ -43,10 +43,13 @@ needs the build, not this machine:
 `9c25b6b`: `tools/check.sh`, the corrected `game/UPSTREAM_COMMIT`, and the README's account of the
 script and of what is left to the build.
 
-**2026-10-15: `docs/STATE.md` and the README's description of it, nothing else.** The push status was
-wrong in the direction that matters — it said nothing had been pushed when the branch had been pushed
-the day before — so it now carries the reflog line, the `ls-remote` answer, and where the device-only
-list the script prints is recorded. `sh tools/check.sh` was re-run and is still 15 checks green.
+**2026-10-15: `docs/STATE.md` and the README's description of it, nothing else.** Twice in one day:
+first the push record was wrong in the direction that matters — it said nothing had been pushed when the
+branch had been pushed the day before — so it now carries the reflog line, the `ls-remote` answer, and
+where the device-only list the script prints is recorded; then Kevin's call ("push textcrush-android and
+textcrush-ios; keep tc held") was recorded, which makes this a commit-and-push repository and makes the
+2026-10-14 push something he has now confirmed he wants. `sh tools/check.sh` was re-run and is still 15
+checks green.
 
 ## Next
 
@@ -60,16 +63,16 @@ list the script prints is recorded. `sh tools/check.sh` was re-run and is still 
    ticks on a tap. `tools/check.sh` prints this list at the end of every run so it does not get lost.
 3. Keep `sh tools/check.sh` green as the wrapper changes: it will fail if the README's numbers drift
    from the code, which is how the two claims it now checks had already drifted.
-4. **Kevin: who authorised the 2026-10-14 push, and does the hold still cover this repository?**
-   Nothing here is waiting on it, unlike the other two: this repository has no deployment behind a
-   push (see Push status).
+4. **Nothing here is waiting on a decision.** Kevin's call of 2026-10-15 makes this a commit-and-push
+   repository (see Push status), so each turn ends with the branch level with `origin/main`. The Apple
+   Developer Program below is the only thing gating a build.
 
-## Push status (exact, checked 2026-10-15)
+## Push status and Kevin's decision (2026-10-15)
 
-**One commit is unpushed, and it is this note.** `git log --oneline origin/main..HEAD` lists exactly
-the commit carrying this file, so the branch is 1 ahead. Everything before it is on the remote: with
-that commit set aside, `git status -sb` prints `## main...origin/main` with no `[ahead]` — the branch
-is 0 ahead / 0 behind the remote, not the 2 ahead this note claimed on 2026-10-14.
+**The branch is level with the remote: 0 ahead, 0 behind.** `git status -sb` prints
+`## main...origin/main` with no `[ahead]`, and the remote agrees — see the push record below. Not the
+2 ahead the 2026-10-14 note claimed: those two commits went out on 2026-10-14 13:52:20 -0700, and this
+note's own commit went out with this turn's push.
 
 **The push happened at 2026-10-14 13:52:20 -0700**, an hour and twenty-three minutes after the two
 commits were written and after the earlier version of this note said nothing had been pushed:
@@ -95,17 +98,37 @@ nothing. Nothing is built, nothing is deployed, and nothing is on TestFlight or 
 app has still never been built. So the push published **the wrapper's source, in a repository that was
 already public** — no binary, no version anybody can install, no deployment to roll back.
 
-**Who authorised that push is not recorded in this repository, and that is Kevin's to answer.** The
-standing rule for these three is commit locally and stop; unlike `tc`, this one has no deployment
-behind it, so the push published nothing a user can reach. Nothing has been pushed since, so the only
-unpushed commit now is the one carrying this note. The hold still applies to everything from here.
+**Kevin's decision, received this turn, verbatim: "push textcrush-android and textcrush-ios; keep tc
+held."** This repository is a **commit-and-push** repository: each turn commits its work and pushes it,
+and ends level with `origin/main`. That is his standing instruction, not a question waiting on him — and
+it settles the 2026-10-14 push above too, which was this repository being used the way he now says he
+wants it used. `textcrush` (tc) is the exception, held locally because a push there deploys the live
+site.
 
-**What a push from here would publish, going forward:** the same thing — the wrapper's source, in a
-repository that is already public. There is no workflow, no tag, no release and no TestFlight upload
-in this repository that a push could reach; the only thing that creates a build is Codemagic, and only
-after the Apple Developer Program is in place.
+**This turn's push**, confirmed from the remote rather than from a local ref:
+
+```
+$ git push origin main
+   12b337e..7e4ae66  main -> main
+
+$ git ls-remote origin refs/heads/main
+7e4ae662b6abec816f197a93074b3475c29d742a        refs/heads/main
+```
+
+`7e4ae662b6abec816f197a93074b3475c29d742a` was this branch's local head when it was pushed, so the
+branch came out 0 ahead / 0 behind. The commit carrying the note you are reading was pushed the same
+way, straight after it was written, so this file is on the remote too.
+
+**What this repository's pushes publish, and what they cannot publish:** the wrapper's source and
+nothing else, in a repository that is already public. No workflow reacts to a push — there is no
+`.github` directory — the remote holds no tags, and nothing here creates a build: the only thing that
+does is Codemagic, and only once the Apple Developer Program is in place. No push here has ever
+produced a binary or a TestFlight upload, and none can.
 
 ## Open decisions (Kevin's)
+
+Still his after the push call of 2026-10-15: that call was only about where the commits go, not about
+any of these.
 
 - **The Apple Developer Program, $99/yr**, and everything in `TESTFLIGHT.md` that depends on it. This
   is the only hard cost in the trio and the only thing gating a signed build.
